@@ -3,30 +3,114 @@
 <head>
    <%- include('./partials/head') %>
     <title>Add New Blog</title>
+    <style>
+        body {
+            background-color: #f4f6f9;
+            color: #2c3e50;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+        .container {
+            max-width: 700px;
+        }
+        .blog-form {
+            background-color: white;
+            border-radius: 12px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            margin-top: 2rem;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .form-control {
+            border-color: #dfe4ea;
+            border-radius: 8px;
+            padding: 12px 15px;
+        }
+        .form-control:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+        #coverImage {
+            padding: 10px 15px;
+        }
+        .btn-primary {
+            background-color: #3498db;
+            border: none;
+            padding: 12px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+        }
+        .btn-primary:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        #content {
+            min-height: 250px;
+            resize: vertical;
+        }
+        .form-text {
+            color: #7f8c8d;
+        }
+    </style>
 </head>
 <body>
     <%- include('./partials/nav') %>
-    <div class="container mt-3">
-        <form action="/blog" method="POST" enctype="multipart/form-data">
+    <div class="container">
+        <form action="/blog" method="POST" enctype="multipart/form-data" class="blog-form">
+            <h2 class="mb-4 text-center" style="color: #2c3e50;">Create New Blog</h2>
+            
             <div class="mb-3">
-                <label for="coverImage" class="form-label">CoverImage</label>
-                <input type="file" class="form-control" id="coverImage" name="coverImage" aria-describedby="coverImage">
+                <label for="coverImage" class="form-label">Cover Image</label>
+                <input 
+                    type="file" 
+                    class="form-control" 
+                    id="coverImage" 
+                    name="coverImage" 
+                    aria-describedby="coverImageHelp"
+                >
+                <div id="coverImageHelp" class="form-text">
+                    Upload a high-quality image that represents your blog
+                </div>
             </div>
+
             <div class="mb-3">
                 <label for="title" class="form-label">Title</label>
-                <input type="text" class="form-control" id="title" name="title" aria-describedby="title" placeholder="Enter blog title">
+                <input 
+                    type="text" 
+                    class="form-control" 
+                    id="title" 
+                    name="title" 
+                    aria-describedby="titleHelp" 
+                    placeholder="Enter blog title"
+                    required
+                >
+                <div id="titleHelp" class="form-text">
+                    Choose a clear and engaging title
+                </div>
             </div>
 
             <div class="mb-3">
-                <label for="content">Content</label>
-                <textarea name="content" class="form-control" placeholder="Type Content here" id="content"></textarea>
+                <label for="content" class="form-label">Content</label>
+                <textarea 
+                    name="content" 
+                    class="form-control" 
+                    placeholder="Type your blog content here" 
+                    id="content"
+                    required
+                ></textarea>
             </div>
 
-            <div class="mb-3">
-                <button class="btn btn-primary" id="submit" type="submit">Submit</button>
+            <div class="mb-3 text-center">
+                <button class="btn btn-primary" id="submit" type="submit">
+                    <i class="bi bi-upload me-2"></i>Publish Blog
+                </button>
             </div>
         </form>
     </div>
     <%- include('./partials/scripts') %>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
 </body>
 </html>

@@ -4,6 +4,7 @@ const router = Router();
 const path=require("path");
 
 const Blog = require("../models/blogs");
+const Comment = require("../models/comments");
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -23,8 +24,46 @@ router.get('/add-new',(req,res)=>{
     })
 })
 
+router.get('/view',async (req,res)=>{
+    const allBlogs = await Blog.find({}).sort({createdAt: -1});
+    return res.render('viewBlog',{
+        user: req.user,
+        blogs: allBlogs,
+    })
+});
+router.get('/search', async (req, res) => {
+    const query = req.query.q || '';
+    try {
+        const blogs = await Blog.find({
+            title: { $regex: query, $options: 'i' }
+    });
+
+        res.json({ blogs });
+    } catch (err) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+router.get('/:id',async (req,res)=>{
+    const blog = await Blog.findById(req.params.id).populate("createdBy");
+    const comments = await Comment.find({blogId: req.params.id}).populate("createdBy");
+    return res.render("blog",{
+        user:req.user,
+        blog,
+        comments,
+    })
+})
+
+router.post('/comment/:blogId',async (req,res)=>{
+    await Comment.create({
+        content: req.body.content,
+        blogId: req.params.blogId,
+        createdBy: req.user._id,
+    });
+    return res.redirect(`/blog/${req.params.blogId}`);
+})
+
 router.post('/',upload.single("coverImage"),async (req,res)=>{
-    console.log(req.body);
     const {title,content} = req.body;
     const blog = await Blog.create({
         content,
