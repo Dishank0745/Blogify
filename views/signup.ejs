@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <%- include('./partials/head') %>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <style>
         html, body {
             height: 100%;
@@ -38,10 +40,17 @@
         .form-control {
             height: 48px;
             border-radius: 6px;
+            position: relative;
         }
         .form-control:focus {
             border-color: #000;
             box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.25);
+        }
+        .form-control.is-valid {
+            border-color: #28a745;
+        }
+        .form-control.is-invalid {
+            border-color: #dc3545;
         }
         .btn-primary {
             background-color: #000;
@@ -53,9 +62,66 @@
             background-color: #1a1a1a;
             border-color: #1a1a1a;
         }
+        .btn-primary:disabled {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            cursor: not-allowed;
+        }
         .signin-link {
             text-align: center;
             margin-top: 1rem;
+        }
+        .input-group {
+            position: relative;
+        }
+        .validation-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+            z-index: 10;
+        }
+        .validation-icon.valid {
+            color: #28a745;
+        }
+        .validation-icon.invalid {
+            color: #dc3545;
+        }
+        .password-requirements {
+            font-size: 12px;
+            margin-top: 8px;
+            padding: 8px;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+        }
+        .requirement {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .requirement:last-child {
+            margin-bottom: 0;
+        }
+        .requirement-icon {
+            margin-right: 8px;
+            font-size: 12px;
+            width: 12px;
+        }
+        .requirement.met {
+            color: #28a745;
+        }
+        .requirement.unmet {
+            color: #dc3545;
+        }
+        .email-feedback {
+            font-size: 12px;
+            margin-top: 4px;
+            color: #dc3545;
+        }
+        .email-feedback.valid {
+            color: #28a745;
         }
     </style>
 </head>
@@ -68,12 +134,14 @@
             </div>
             
             <% if (locals.error) { %>
-                <div class="alert alert-danger" role="alert">
-                    <%= error %>
-                </div>
+                <script>
+                    window.addEventListener('DOMContentLoaded', function() {
+                        alert('<%= error %>');
+                    });
+                </script>
             <% } %>
-
-            <form action="/user/signup" method="POST">
+            
+            <form id="signupForm" action="/user/signup" method="POST" novalidate>
                 <div class="mb-3">
                     <label for="fullName" class="form-label">Full Name</label>
                     <input 
@@ -86,31 +154,58 @@
                         value="<%= locals.fullName || '' %>"
                     >
                 </div>
+                
                 <div class="mb-3">
                     <label for="emailInput" class="form-label">Email address</label>
-                    <input 
-                        type="email" 
-                        class="form-control" 
-                        id="emailInput" 
-                        name="email" 
-                        aria-describedby="emailHelp" 
-                        required 
-                        placeholder="Enter your email"
-                        value="<%= locals.email || '' %>"
-                    >x
+                    <div class="input-group">
+                        <input 
+                            type="email" 
+                            class="form-control" 
+                            id="emailInput" 
+                            name="email" 
+                            required 
+                            placeholder="Enter your email"
+                            value="<%= locals.email || '' %>"
+                        >
+                        <span class="validation-icon" id="emailIcon"></span>
+                    </div>
+                    <div class="email-feedback" id="emailFeedback"></div>
                 </div>
+                
                 <div class="mb-3">
                     <label for="passwordInput" class="form-label">Password</label>
-                    <input 
-                        type="password" 
-                        class="form-control" 
-                        id="passwordInput" 
-                        name="password" 
-                        required 
-                        placeholder="Create a password"
-                    >
+                    <div class="input-group">
+                        <input 
+                            type="password" 
+                            class="form-control" 
+                            id="passwordInput" 
+                            name="password" 
+                            required 
+                            placeholder="Create a password"
+                        >
+                        <span class="validation-icon" id="passwordIcon"></span>
+                    </div>
+                    <div class="password-requirements" id="passwordRequirements">
+                        <div class="requirement unmet" id="lengthReq">
+                            <span class="requirement-icon">✗</span>
+                            At least 8 characters
+                        </div>
+                        <div class="requirement unmet" id="letterReq">
+                            <span class="requirement-icon">✗</span>
+                            Contains letters
+                        </div>
+                        <div class="requirement unmet" id="digitReq">
+                            <span class="requirement-icon">✗</span>
+                            Contains digits
+                        </div>
+                        <div class="requirement unmet" id="specialReq">
+                            <span class="requirement-icon">✗</span>
+                            Contains special characters
+                        </div>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary w-100">Sign Up</button>
+                
+                <button type="submit" class="btn btn-primary w-100" id="submitBtn" disabled>Sign Up</button>
                 <div class="signin-link">
                     Already have an account? <a href="/user/signin">Sign In</a>
                 </div>
@@ -118,5 +213,135 @@
         </div>
     </div>
 
+    <script>
+        const emailInput = document.getElementById('emailInput');
+        const emailIcon = document.getElementById('emailIcon');
+        const emailFeedback = document.getElementById('emailFeedback');
+        const passwordInput = document.getElementById('passwordInput');
+        const passwordIcon = document.getElementById('passwordIcon');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        const lengthReq = document.getElementById('lengthReq');
+        const letterReq = document.getElementById('letterReq');
+        const digitReq = document.getElementById('digitReq');
+        const specialReq = document.getElementById('specialReq');
+
+        let isEmailValid = false;
+        let isPasswordValid = false;
+
+
+        function validateEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        emailInput.addEventListener('input', function() {
+            const email = this.value.trim();
+            
+            if (email === '') {
+                emailIcon.innerHTML = '';
+                emailFeedback.textContent = '';
+                emailInput.classList.remove('is-valid', 'is-invalid');
+                isEmailValid = false;
+            } else if (validateEmail(email)) {
+                emailIcon.innerHTML = '✓';
+                emailIcon.className = 'validation-icon valid';
+                emailFeedback.textContent = 'Valid email address';
+                emailFeedback.className = 'email-feedback valid';
+                emailInput.classList.remove('is-invalid');
+                emailInput.classList.add('is-valid');
+                isEmailValid = true;
+            } else {
+                emailIcon.innerHTML = '✗';
+                emailIcon.className = 'validation-icon invalid';
+                emailFeedback.textContent = 'Please enter a valid email address';
+                emailFeedback.className = 'email-feedback';
+                emailInput.classList.remove('is-valid');
+                emailInput.classList.add('is-invalid');
+                isEmailValid = false;
+            }
+            
+            updateSubmitButton();
+        });
+
+        // Password validation
+        function validatePassword(password) {
+            const hasLength = password.length >= 8;
+            const hasLetter = /[a-zA-Z]/.test(password);
+            const hasDigit = /\d/.test(password);
+            const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+            
+            return {
+                hasLength,
+                hasLetter,
+                hasDigit,
+                hasSpecial,
+                isValid: hasLength && hasLetter && hasDigit && hasSpecial
+            };
+        }
+
+        function updateRequirement(element, isMet) {
+            const icon = element.querySelector('.requirement-icon');
+            if (isMet) {
+                element.className = 'requirement met';
+                icon.textContent = '✓';
+            } else {
+                element.className = 'requirement unmet';
+                icon.textContent = '✗';
+            }
+        }
+
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            const validation = validatePassword(password);
+            
+            // Update individual requirements
+            updateRequirement(lengthReq, validation.hasLength);
+            updateRequirement(letterReq, validation.hasLetter);
+            updateRequirement(digitReq, validation.hasDigit);
+            updateRequirement(specialReq, validation.hasSpecial);
+            
+            // Update password field styling and icon
+            if (password === '') {
+                passwordIcon.innerHTML = '';
+                passwordInput.classList.remove('is-valid', 'is-invalid');
+                isPasswordValid = false;
+            } else if (validation.isValid) {
+                passwordIcon.innerHTML = '✓';
+                passwordIcon.className = 'validation-icon valid';
+                passwordInput.classList.remove('is-invalid');
+                passwordInput.classList.add('is-valid');
+                isPasswordValid = true;
+            } else {
+                passwordIcon.innerHTML = '✗';
+                passwordIcon.className = 'validation-icon invalid';
+                passwordInput.classList.remove('is-valid');
+                passwordInput.classList.add('is-invalid');
+                isPasswordValid = false;
+            }
+            
+            updateSubmitButton();
+        });
+
+        function updateSubmitButton() {
+            const fullNameFilled = document.getElementById('fullName').value.trim() !== '';
+            if (isEmailValid && isPasswordValid && fullNameFilled) {
+                submitBtn.disabled = false;
+            } else {
+                submitBtn.disabled = true;
+            }
+        }
+
+        // Also check full name field
+        document.getElementById('fullName').addEventListener('input', updateSubmitButton);
+
+        // Form submission
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
+            if (!isEmailValid || !isPasswordValid) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    </script>
 </body>
 </html>
